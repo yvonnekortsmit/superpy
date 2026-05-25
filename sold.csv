@@ -1,0 +1,4 @@
+ID,ID bought,Product Name,Count,Buy Price,Expiration Date,Sell Price,Buy Date,Sell Date
+1,8,Milk,1,1.8,2027-10-12,2.0,2026-05-25,2026-05-20
+2,16,Milk,1,1.8,2027-10-12,2.0,2026-05-25,2026-05-15
+3,64,Milk,1,1.8,2027-10-12,2.0,2026-05-25,2026-05-25

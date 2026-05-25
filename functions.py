@@ -1,0 +1,333 @@
+import csv
+import datetime as dt 
+from tabulate import tabulate
+from pathlib import Path
+import argparse
+import matplotlib.pyplot as plt
+import numpy as np
+from rich.console import Console
+import calendar
+console = Console()
+##variables
+#other variables
+filepathbought = Path("bought.csv")
+filepathsold = Path("sold.csv")
+filepathexpirated = Path("expired.csv")
+timefilepath = Path("superpytime.txt")
+
+#headers for csv
+boughtheaders = ["ID", "Product Name", "Count", "Buy Price", "Expiration Date", "Buy Date", "Sell Date"]
+soldheaders = ["ID", "ID bought","Product Name", "Count", "Buy Price", "Expiration Date", "Sell Price", "Buy Date", "Sell Date"]
+
+##valid date for argparse with error message
+def valid_date(date_string):
+    try:
+        return dt.date.strptime(date_string, "%Y-%m-%d")
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            "Date must be in format YYYY-MM-DD"
+        )
+
+def valid_month(date_string):
+    try:
+        return dt.date.strptime(date_string, "%Y-%m")
+    except ValueError:
+        raise argparse.ArgumentTypeError("Date must be in format YYYY-MM")
+
+def valid_year(date_string):
+    try:
+        return dt.date.strptime(date_string, "%Y")
+    except ValueError:
+        raise argparse.ArgumentTypeError("Date must be in format YYYY")
+    
+#functions for the parsers
+#write the application file to an txt
+def superpytime_file():
+    if not timefilepath.exists():
+        with timefilepath.open("w", newline="") as timefile:
+            timefile.write(dt.date.today().strftime("%Y-%m-%d"))
+    with timefilepath.open("r") as timefile:
+        saved_date = timefile.read().strip()
+    return dt.date.strptime(saved_date, "%Y-%m-%d")
+superpy_time = superpytime_file()
+
+#Time functions
+def advanced_time(advanced_days:int):
+    global superpy_time
+    superpy_time += dt.timedelta(days=advanced_days)
+    with timefilepath.open("w") as timefile:
+        timefile.write(superpy_time.strftime("%Y-%m-%d"))
+    superpy_date = superpy_time.strftime("%A %d %B %Y")
+    return superpy_date
+
+def set_time(application_time):
+    global superpy_time
+    if application_time == "today":
+        application_time = dt.date.today()
+        print_app_time = application_time.strftime("%A %d %B %Y")
+    elif application_time == "yesterday":
+        application_time = dt.date.today() - dt.timedelta(days=1)
+        print_app_time = application_time.strftime("%A %d %B %Y")
+    else: #met datum zoals bv --date 2019-12
+        print_app_time = application_time.strftime("%A %d %B %Y")
+    superpy_time = application_time
+    with timefilepath.open("w") as timefile:
+        timefile.write(superpy_time.strftime("%Y-%m-%d"))
+    return print_app_time
+
+#product functions
+def add_product(product_name, buy_price:float, expiration_date):
+    buy_date = superpy_time 
+    if not filepathbought.exists():
+        with filepathbought.open("w", newline="") as boughtfile:
+            writer = csv.DictWriter(boughtfile, fieldnames=boughtheaders)
+            writer.writeheader()
+    with filepathbought.open("r", newline="") as boughtfile:
+        rows = list(csv.DictReader(boughtfile))
+        # count van producten toevoegen
+        if rows:
+            new_id = (
+                int(rows[-1]["ID"]) + 1
+            )  # telt 1 bij de voorgaande ID op wanneer die al bestaat
+        else:
+            new_id = 1  # wanneer er geen voorgaande id is neemt hij 1
+        added_product_name = product_name.strip().lower().capitalize()
+        rows.append(
+            {
+                "ID": new_id,
+                "Product Name": added_product_name,
+                "Buy Price": buy_price,
+                "Expiration Date": expiration_date,
+                "Buy Date": buy_date.strftime('%Y-%m-%d'),
+            }
+        )
+    with filepathbought.open("w", newline="") as boughtfile:
+        writer = csv.DictWriter(boughtfile, fieldnames=boughtheaders)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def sell_product(product_name, sell_price: float):
+    #filepathsold = Path("sold.csv")
+    #filepathbought = Path("bought.csv")
+    sell_date = superpy_time 
+    if not filepathsold.exists():
+        with filepathsold.open("w", newline="") as soldfile:
+            writer = csv.DictWriter(soldfile, fieldnames=soldheaders)
+            writer.writeheader()
+    with filepathbought.open("r", newline="") as boughtfile:
+        boughtrows = list(csv.DictReader(boughtfile))
+    with filepathsold.open("r", newline="") as soldfile:
+        soldrows = list(csv.DictReader(soldfile))
+    sold_row = None
+    expired_product = False
+    #kopieren van bought rows voor selling
+    for row in boughtrows:
+        expirationdate = dt.date.strptime(row["Expiration Date"], '%Y-%m-%d')
+        if row["Product Name"].strip().lower() == product_name.strip().lower() and row["Sell Date"] == "":
+            if sell_date > expirationdate:
+                expired_product = True
+                continue
+
+            sold_row = row.copy() 
+            row["Sell Date"] = sell_date.strftime('%Y-%m-%d')
+            break
+    #updaten van sold csv
+    if sold_row:
+        if soldrows:
+            new_id = (
+            int(soldrows[-1]["ID"]) + 1
+            ) 
+        else:
+            new_id = 1
+        soldrows.append(
+            {
+                "ID": new_id,
+                "ID bought": sold_row["ID"],
+                "Product Name": sold_row["Product Name"],
+                "Count": 1,
+                "Buy Price": sold_row["Buy Price"],
+                "Sell Price": sell_price,
+                "Expiration Date": sold_row["Expiration Date"],
+                "Buy Date": sold_row["Buy Date"],
+                "Sell Date": sell_date.strftime('%Y-%m-%d'),
+            }
+        )
+    if sold_row is None:
+        if expired_product:
+            raise ValueError(f"{product_name.strip().title()} is expired and can not be sold.") #maybe as argparse.ArgumentTypeError()?
+        else:
+            raise ValueError(f"{product_name.strip().title()} is not in stock.")
+    #update sold file
+    with filepathsold.open("w", newline="") as soldfile:
+        writer = csv.DictWriter(soldfile, fieldnames=soldheaders)
+        writer.writeheader()
+        writer.writerows(soldrows)
+    # update bought file
+    with filepathbought.open("w", newline="") as boughtfile:
+        writer = csv.DictWriter(boughtfile, fieldnames=boughtheaders)
+        writer.writeheader()
+        writer.writerows(boughtrows)
+
+
+#Report functions
+def report_inventory(inventory_time):
+    if inventory_time == "yesterday":
+        inventory_time = superpy_time - dt.timedelta(days=1)
+    elif inventory_time == "now":
+        inventory_time = superpy_time
+    with filepathbought.open("r", newline="") as boughtfile:
+        rows = list(csv.DictReader(boughtfile))
+        inventory = []
+        for row in rows:
+            buydate = dt.date.strptime(row["Buy Date"], '%Y-%m-%d')
+            if row["Sell Date"] != "":
+                selldate = dt.date.strptime(row["Sell Date"], "%Y-%m-%d")
+            else:
+                selldate = None
+            if buydate <= inventory_time and (selldate is None or selldate > inventory_time): #int(row["ID"]) < 3:
+                matched_products = False
+                for products in inventory:
+                    matching_products = products["Product Name"] == row["Product Name"]
+                    matching_price = products["Buy Price"] == row["Buy Price"]
+                    matching_expirationdate = products["Expiration Date"] == row["Expiration Date"]
+                    if matching_products and matching_price and matching_expirationdate:
+                        products["Count"] += 1
+                        matched_products = True
+                        break
+                if not matched_products:
+                    inventory.append(
+                        {
+                            "Product Name": row["Product Name"],
+                            "Count": 1,
+                            "Buy Price": row["Buy Price"],
+                            "Expiration Date": row["Expiration Date"],
+                        }
+                    )
+        print(tabulate(inventory, headers="keys", tablefmt="grid"))
+
+
+def report_revenue(revenue_time):
+    if revenue_time == "yesterday":
+        revenue_time = superpy_time - dt.timedelta(days=1)
+        time_period = "day"
+    elif revenue_time == "today":
+        revenue_time = superpy_time
+        time_period = "day"
+    else: #met datum zoals bv --date 2019-12
+        revenue_time 
+        time_period = "month"
+    total_revenue = 0
+    with filepathsold.open("r", newline="") as soldfile:
+        rows = list(csv.DictReader(soldfile))
+        for row in rows:
+            buydate = dt.date.strptime(row["Buy Date"], '%Y-%m-%d')
+            selldate = dt.date.strptime(row["Sell Date"], '%Y-%m-%d')
+            expirationdate = dt.date.strptime(row["Expiration Date"], '%Y-%m-%d')
+            if selldate <= expirationdate:
+                revenue = float(row["Sell Price"]) * float(row["Count"])
+                if time_period == "day":
+                    if buydate <= revenue_time and selldate == revenue_time: ##msischien alleen selldate == revenue_time?
+                        total_revenue += revenue
+                elif time_period == "month":
+                    if selldate.year == revenue_time.year and selldate.month == revenue_time.month:
+                        total_revenue += revenue
+    return total_revenue
+
+def report_profit(profit_time):
+    if profit_time == "yesterday":
+        profit_time = superpy_time - dt.timedelta(days=1)
+        time_period = "day"
+    elif profit_time == "today":
+        profit_time = superpy_time
+        time_period = "day"
+    else: #met datum zoals bv --date 2019-12
+        profit_time 
+        time_period = "month"
+    total_profit = 0
+    with filepathsold.open("r", newline="") as soldfile:
+        rows = list(csv.DictReader(soldfile))
+        for row in rows:
+            buydate = dt.date.strptime(row["Buy Date"], '%Y-%m-%d') #should I change date.strptime to datetime.strptime()??
+            selldate = dt.date.strptime(row["Sell Date"], '%Y-%m-%d')
+            profit = (float(row["Sell Price"]) - float(row["Buy Price"])) * float(row["Count"])
+            if time_period == "day":
+                if buydate <= profit_time and selldate == profit_time: ##msischien alleen selldate == revenue_time?
+                    total_profit += profit
+            elif time_period == "month":
+                if selldate.year == profit_time.year and selldate.month == profit_time.month:
+                    total_profit += profit
+    return total_profit
+
+###plots
+
+### profit
+def barplot_monthprofit(profit_time):
+    profits = []
+    days = []
+    #profitdata = {} #temporary storage
+    profit_time_month = profit_time.strftime("%Y-%m")
+    print_profit_time = profit_time.strftime("%B %Y")
+    year = profit_time.year
+    month = profit_time.month
+    num_days = calendar.monthrange(year, month)[1]
+    profitdata = {day: 0 for day in range(1, num_days + 1)}
+    with filepathsold.open("r", newline="") as soldfile:
+        rows = list(csv.DictReader(soldfile))
+        for row in rows:
+            selldate = dt.date.strptime(row["Sell Date"], '%Y-%m-%d')
+            if selldate.strftime("%Y-%m") == profit_time_month:
+                day = selldate.day
+                profit = (float(row["Sell Price"]) - float(row["Buy Price"])) * float(row["Count"])
+                if day in profitdata:
+                    profitdata[day] = profitdata[day] + profit
+                else:
+                    profitdata[day] = profit  
+    #list for plot
+    for day in sorted(profitdata):
+        days.append(day)
+        profits.append(profitdata[day])
+
+    #plot
+    fig, ax = plt.subplots(figsize=(14, 5))
+    ax.bar(days, profits, width=0.8)
+    ax.set(
+        xlabel="Day of Month",
+        ylabel="Profit (€)",
+        title=f"Profit per Day - {print_profit_time}"
+    )
+    ax.set_xticks(days)
+    plt.show()
+
+def barplot_yearprofit(profit_time):
+    profits = []
+    months = []
+    profitdata = {month: 0 for month in range(1, 13)} #0 as temporary profit for all months
+    profit_time_year = profit_time.strftime("%Y")
+    print_profit_time = profit_time.strftime("%Y")
+    with filepathsold.open("r", newline="") as soldfile:
+        rows = list(csv.DictReader(soldfile))
+        for row in rows:
+            selldate = dt.date.strptime(row["Sell Date"], '%Y-%m-%d')
+            if selldate.strftime("%Y") == profit_time_year:
+                month = selldate.month
+                profit = (float(row["Sell Price"]) - float(row["Buy Price"])) * float(row["Count"])
+                if month in profitdata:
+                    profitdata[month] = profitdata[month] + profit
+                else:
+                    profitdata[month] = profit  
+    #list for plot
+    for month in sorted(profitdata):
+        months.append(month)
+        profits.append(profitdata[month])
+
+    #plot
+    fig, ax = plt.subplots()
+    ax.bar(months, profits, width=0.8)
+    ax.set(
+        xlabel="Month",
+        ylabel="Profit (€)",
+        title=f"Profit per Month - {print_profit_time}"
+    )
+    ax.set_xticks(months)
+    plt.show()
