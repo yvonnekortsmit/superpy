@@ -1,0 +1,29 @@
+Usage of dt.date.strptime() instead of dt.datetime.strptime()
+I chose datetime.date.strptime because the application only works with dates (not times). 
+This keeps the implementation simpler and avoids dealing with unnecessary time components. 
+It also directly returns a date object, which matches the domain model of the project (supermarket transactions are date-based).
+
+Report inspo:
+report.md
+Technical Report – SuperPy
+This project implements a command-line supermarket management system that supports buying and selling products, tracking inventory, and generating revenue and profit reports over time. 
+Three technical elements of the implementation are particularly notable: the custom time system, the CSV-based persistence layer, and the reporting and visualization features.
+
+Custom application time system
+A central feature of the system is the ability to simulate time using a custom “application date”. 
+Instead of relying directly on the system clock throughout the program, the current date is stored in a text file (superpytime.txt). 
+This allows the user to advance time or set specific dates using commands such as --advance-time or application-time. 
+The application uses datetime.date as its core data type since only dates (not timestamps) are relevant. For parsing user input into date objects, 
+datetime.date.strptime is used. This choice directly returns a date object, avoiding unnecessary conversion through datetime.datetime, 
+and keeps the implementation aligned with the domain model of supermarket transactions.
+
+CSV-based persistence layer
+
+All product data is stored in external CSV files (bought.csv and sold.csv). The csv.DictReader and csv.DictWriter modules are used to ensure structured 
+reading and writing of records. Each transaction is stored with relevant metadata such as product name, price, expiration date, and buy/sell dates. 
+This approach provides a lightweight alternative to a database while maintaining persistence and portability.
+
+Reporting and visualization
+The system supports revenue and profit calculations over daily and monthly periods by filtering CSV records based on dates. 
+Additionally, matplotlib is used to generate bar charts of profit over time (monthly and yearly views). 
+This improves usability by allowing users to visually interpret financial performance trends rather than relying only on numeric output.

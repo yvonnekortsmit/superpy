@@ -73,28 +73,37 @@ if args.advance_time:
 
 #set the application time
 elif args.command == "application-time":
-    if args.today:
-        set_time("today")
-        print(f"Application date is set to today: {set_time("today")}.")
-    elif args.yesterday:
-        set_time("yesterday")
-        print(f"Application date is set to yesterday: {set_time("yesterday")}.")
-    elif args.date:
-        set_time(args.date)
-        print(f"Application date is set to: {set_time(args.date)}.")
+    if not args.today or args.yesterday or args.date:
+        console.print("\nPlease set the application time via one of the following methods:\n\n[#B0C4DE][#87CEEB]1.[/#87CEEB] application-time --today\n[#87CEEB]2.[/#87CEEB] application-time --yesterday\n[#87CEEB]3.[/#87CEEB] application-time --date [#FFFF00]APPLICATION_DATE[/#FFFF00] ([#00BFFF]YYYY-MM-DD[/#00BFFF])[/#B0C4DE]\n")
+    else:
+        if args.today:
+            set_time("today")
+            print(f"\nApplication date is set to today: {set_time("today")}.\n")
+        elif args.yesterday:
+            set_time("yesterday")
+            print(f"Application date is set to yesterday: {set_time("yesterday")}.")
+        elif args.date:
+            set_time(args.date)
+            print(f"Application date is set to: {set_time(args.date)}.")
 
 #outcome for buy parser
 elif args.command == "buy":
-    add_product(args.product_name, args.price, args.expiration_date)
-    print(f"Buying {args.product_name} for €{args.price:.2f}, expires at {args.expiration_date}.")
+    if not all([args.product_name, args.price, args.expiration_date]):
+        console.print("\nPlease specify the product you want to buy:\n\n[#B0C4DE]buy --product-name [#FFFF00]PRODUCT_NAME[/#FFFF00] --price [#FFFF00]PRICE[/#FFFF00] --expiration-date [#FFFF00]EXPIRATION_DATE[/#FFFF00] ([#00BFFF]YYYY-MM-DD[/#00BFFF])[/#B0C4DE]\n")
+    else:
+        add_product(args.product_name, args.price, args.expiration_date)
+        print(f"Buying {args.product_name} for €{args.price:.2f}, expires at {args.expiration_date}.")
 
 #outcome for sell parser
 elif args.command == "sell":
-    try:
-        sell_product(args.product_name, args.price)
-        print(f"Selling {args.product_name} for €{args.price:.2f}")
-    except ValueError as producterror:
-        console.print(f"Error: {producterror}", style="bold red")
+    if not all([args.product_name, args.price]):
+        console.print("\nPlease specify the product you want to sell:\n\n[#B0C4DE]sell --product-name [#FFFF00]PRODUCT_NAME[/#FFFF00] --price [#FFFF00]SELL_PRICE[/#FFFF00][/#B0C4DE]\n")
+    else:
+        try:
+            sell_product(args.product_name, args.price)
+            print(f"Selling {args.product_name} for €{args.price:.2f}")
+        except ValueError as producterror:
+            console.print(f"[#FF6B6B]\nError:[/#FF6B6B] {producterror}\n")
 
 #outcome for inventory parser
 elif args.command == "report" and args.report == "inventory":
@@ -131,9 +140,4 @@ elif args.command == "plot" and args.plot == "profit":
         barplot_yearprofit(args.year)
 
 
-#outcome for sell parser
-#elif args.advance_time:
-#    advanced_time(args.advance_time)
-    #print(f"Selling {args.product_name} for €{args.price:.2f}")
-#if __name__ == "__main__":
- #   print("The outcome is:") #{outcome}") ##output for the users.
+
