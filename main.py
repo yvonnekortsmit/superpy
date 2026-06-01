@@ -60,8 +60,6 @@ plotprofit_parser = plot_subparser.add_parser('profit')
 plotprofit_parser.add_argument('--month', type=valid_month, help='Plot profit on which date? Please specify the date as YYYY-MM.')
 plotprofit_parser.add_argument('--year', type=valid_year, help='Plot profit on which year? Please specify the year as YYYY.')
 
-
-
 #Parse arguments
 args = parser.parse_args()
 
@@ -73,7 +71,7 @@ if args.advance_time:
 
 #set the application time
 elif args.command == "application-time":
-    if not args.today or args.yesterday or args.date:
+    if not (args.today or args.yesterday or args.date):
         console.print("\nPlease set the application time via one of the following methods:\n\n[#B0C4DE][#87CEEB]1.[/#87CEEB] application-time --today\n[#87CEEB]2.[/#87CEEB] application-time --yesterday\n[#87CEEB]3.[/#87CEEB] application-time --date [#FFFF00]APPLICATION_DATE[/#FFFF00] ([#00BFFF]YYYY-MM-DD[/#00BFFF])[/#B0C4DE]\n")
     else:
         if args.today:
@@ -81,10 +79,10 @@ elif args.command == "application-time":
             print(f"\nApplication date is set to today: {set_time("today")}.\n")
         elif args.yesterday:
             set_time("yesterday")
-            print(f"Application date is set to yesterday: {set_time("yesterday")}.")
+            print(f"\nApplication date is set to yesterday: {set_time("yesterday")}.\n")
         elif args.date:
             set_time(args.date)
-            print(f"Application date is set to: {set_time(args.date)}.")
+            print(f"\nApplication date is set to: {set_time(args.date)}.\n")
 
 #outcome for buy parser
 elif args.command == "buy":
@@ -92,7 +90,7 @@ elif args.command == "buy":
         console.print("\nPlease specify the product you want to buy:\n\n[#B0C4DE]buy --product-name [#FFFF00]PRODUCT_NAME[/#FFFF00] --price [#FFFF00]PRICE[/#FFFF00] --expiration-date [#FFFF00]EXPIRATION_DATE[/#FFFF00] ([#00BFFF]YYYY-MM-DD[/#00BFFF])[/#B0C4DE]\n")
     else:
         add_product(args.product_name, args.price, args.expiration_date)
-        print(f"Buying {args.product_name} for €{args.price:.2f}, expires at {args.expiration_date}.")
+        print(f"Buying {args.product_name} for {args.price:.2f}, expires at {args.expiration_date}.")
 
 #outcome for sell parser
 elif args.command == "sell":
@@ -101,7 +99,7 @@ elif args.command == "sell":
     else:
         try:
             sell_product(args.product_name, args.price)
-            print(f"Selling {args.product_name} for €{args.price:.2f}")
+            print(f"\nSelling {args.product_name} for {args.price:.2f}\n")
         except ValueError as producterror:
             console.print(f"[#FF6B6B]\nError:[/#FF6B6B] {producterror}\n")
 
@@ -115,29 +113,26 @@ elif args.command == "report" and args.report == "inventory":
 #outcome for revenue parser
 elif args.command == "report" and args.report == "revenue":
     if args.today:
-        print(f"Today's revenue so far: €{report_revenue("today"):.2f}.")
+        print(f"\nToday's revenue so far: {report_revenue("today"):.2f}.\n")
     elif args.yesterday:
-        print(f"Yesterday's revenue: €{report_revenue("yesterday"):.2f}.")
+        print(f"\nYesterday's revenue: {report_revenue("yesterday"):.2f}.\n")
     elif args.date:
         print_date = args.date.strftime("%B %Y")
-        print(f"Revenue from {print_date}: €{report_revenue(args.date):.2f}.")
+        print(f"\nRevenue from {print_date}: {report_revenue(args.date):.2f}.\n")
 
 elif args.command == "report" and args.report == "profit":
     if args.today:
-        print(f"Today's profit so far: €{report_profit("today"):.2f}.")
+        print(f"\nToday's profit so far: {report_profit("today"):.2f}.\n")
     elif args.yesterday:
-        print(f"Yesterday's profit: €{report_profit("yesterday"):.2f}.")
+        print(f"\nYesterday's profit: {report_profit("yesterday"):.2f}.\n")
     elif args.date:
         print_date = args.date.strftime("%B %Y")
-        print(f"Profit from {print_date}: €{report_profit(args.date):.2f}.")
+        print(f"\nProfit from {print_date}: {report_profit(args.date):.2f}.\n")
 
 elif args.command == "plot" and args.plot == "profit":
     if args.month:
-        console.print("[green]Plot is visible in pop-up screen.[/green] Please [bold red]close[/bold red] the window to continue this program.")
+        console.print("\n[green]Plot will be visible via pop-up screen.[/green] Please [bold red]close[/bold red] the plotwindow to continue this program.\n")
         barplot_monthprofit(args.month)
     elif args.year:
-        console.print("[green]Plot is visible in pop-up screen.[/green] Please [bold red]close[/bold red] the window to continue this program.")
+        console.print("\n[green]Plot will be visible via pop-up screen.[/green] Please [bold red]close[/bold red] the plotwindow to continue this program.\n")
         barplot_yearprofit(args.year)
-
-
-
