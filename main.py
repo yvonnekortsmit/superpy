@@ -30,6 +30,11 @@ inventory_parser = report_subparser.add_parser('inventory')
 inventory_parser.add_argument('--now', action='store_true', help='Report current inventory.')
 inventory_parser.add_argument('--yesterday', action='store_true', help='Report yesterdays inventory.')
 
+#create expired subparsers
+expired_parser = report_subparser.add_parser('expired')
+expired_parser.add_argument('--now', action='store_true', help='Report current expired products.')
+expired_parser.add_argument('--yesterday', action='store_true', help='Report yesterdays expired products.')
+
 #create revenue subparsers
 revenue_parser = report_subparser.add_parser('revenue')
 revenue_parser.add_argument('--today', action='store_true', help='Report todays revenue.')
@@ -40,7 +45,14 @@ revenue_parser.add_argument('--date', type=valid_month, help='Report revenue on 
 profit_parser = report_subparser.add_parser('profit')
 profit_parser.add_argument('--today', action='store_true', help='Report todays profit.')
 profit_parser.add_argument('--yesterday', action='store_true', help='Report yesterdays profit.')
-profit_parser.add_argument('--date', type=valid_month, help='Report revenue on which date?.') 
+profit_parser.add_argument('--date', type=valid_month, help='Report profit on which date?') 
+
+#create loss subparsers
+loss_parser = report_subparser.add_parser('loss')
+loss_parser.add_argument('--today', action='store_true', help='Report todays loss.')
+loss_parser.add_argument('--yesterday', action='store_true', help='Report yesterdays loss.')
+loss_parser.add_argument('--date', type=valid_month, help='Report loss on which date?') 
+
 
 # create --advance-time 2 -- what should this do?? look into the future?
 parser.add_argument('--advance-time', type=int, default=0, help='Look into the future, for how many days?.')
@@ -55,10 +67,20 @@ time_parser.add_argument('--date', type=valid_date, help='Set application date t
 plot_parser = subparsers.add_parser('plot', help='Plot the inventory, revenue or profit.')
 plot_subparser = plot_parser.add_subparsers(dest="plot", help='Plot the inventory, revenue or profit.')
 
-#create profit subparsers
+#create profit plot subparsers
 plotprofit_parser = plot_subparser.add_parser('profit')
 plotprofit_parser.add_argument('--month', type=valid_month, help='Plot profit on which date? Please specify the date as YYYY-MM.')
 plotprofit_parser.add_argument('--year', type=valid_year, help='Plot profit on which year? Please specify the year as YYYY.')
+
+#create revenue plot subparsers
+plotrevenue_parser = plot_subparser.add_parser('revenue')
+plotrevenue_parser.add_argument('--month', type=valid_month, help='Plot revenue on which date? Please specify the date as YYYY-MM.')
+plotrevenue_parser.add_argument('--year', type=valid_year, help='Plot revenue on which year? Please specify the year as YYYY.')
+
+#create loss plot subparsers
+plotloss_parser = plot_subparser.add_parser('loss')
+plotloss_parser.add_argument('--month', type=valid_month, help='Plot loss on which date? Please specify the date as YYYY-MM.')
+plotloss_parser.add_argument('--year', type=valid_year, help='Plot loss on which year? Please specify the year as YYYY.')
 
 #Parse arguments
 args = parser.parse_args()
@@ -90,7 +112,7 @@ elif args.command == "buy":
         console.print("\nPlease specify the product you want to buy:\n\n[#B0C4DE]buy --product-name [#FFFF00]PRODUCT_NAME[/#FFFF00] --price [#FFFF00]PRICE[/#FFFF00] --expiration-date [#FFFF00]EXPIRATION_DATE[/#FFFF00] ([#00BFFF]YYYY-MM-DD[/#00BFFF])[/#B0C4DE]\n")
     else:
         add_product(args.product_name, args.price, args.expiration_date)
-        print(f"Buying {args.product_name} for {args.price:.2f}, expires at {args.expiration_date}.")
+        print(f"Buying {args.product_name} for €{args.price:.2f}, expires at {args.expiration_date}.")
 
 #outcome for sell parser
 elif args.command == "sell":
@@ -99,7 +121,7 @@ elif args.command == "sell":
     else:
         try:
             sell_product(args.product_name, args.price)
-            print(f"\nSelling {args.product_name} for {args.price:.2f}\n")
+            print(f"\nSelling {args.product_name} for €{args.price:.2f}\n")
         except ValueError as producterror:
             console.print(f"[#FF6B6B]\nError:[/#FF6B6B] {producterror}\n")
 
@@ -110,29 +132,65 @@ elif args.command == "report" and args.report == "inventory":
     elif args.yesterday:
         report_inventory("yesterday")
 
-#outcome for revenue parser
+#outcome for expired parser
+elif args.command == "report" and args.report == "expired":
+    if args.now:
+        report_inventory("now")
+    elif args.yesterday:
+        report_inventory("yesterday")
+
+#Raport revenue parser
 elif args.command == "report" and args.report == "revenue":
     if args.today:
-        print(f"\nToday's revenue so far: {report_revenue("today"):.2f}.\n")
+        print(f"\nToday's revenue so far: €{report_revenue("today"):.2f}.\n")
     elif args.yesterday:
-        print(f"\nYesterday's revenue: {report_revenue("yesterday"):.2f}.\n")
+        print(f"\nYesterday's revenue: €{report_revenue("yesterday"):.2f}.\n")
     elif args.date:
         print_date = args.date.strftime("%B %Y")
-        print(f"\nRevenue from {print_date}: {report_revenue(args.date):.2f}.\n")
+        print(f"\nRevenue from {print_date}: €{report_revenue(args.date):.2f}.\n")
 
+#Raport profit parser
 elif args.command == "report" and args.report == "profit":
     if args.today:
-        print(f"\nToday's profit so far: {report_profit("today"):.2f}.\n")
+        print(f"\nToday's profit so far: €{report_profit("today"):.2f}.\n")
     elif args.yesterday:
-        print(f"\nYesterday's profit: {report_profit("yesterday"):.2f}.\n")
+        print(f"\nYesterday's profit: €{report_profit("yesterday"):.2f}.\n")
     elif args.date:
         print_date = args.date.strftime("%B %Y")
-        print(f"\nProfit from {print_date}: {report_profit(args.date):.2f}.\n")
+        print(f"\nProfit from {print_date}: €{report_profit(args.date):.2f}.\n")
 
+#Report Loss parse
+elif args.command == "report" and args.report == "loss":
+    if args.today:
+        print(f"\nToday's loss: €{report_loss("today"):.2f}.\n")
+    elif args.yesterday:
+        print(f"\nYesterday's loss: €{report_loss("yesterday"):.2f}.\n")
+    elif args.date:
+        print_date = args.date.strftime("%B %Y")
+        print(f"\nLoss from {print_date}: €{report_loss(args.date):.2f}.\n")
+
+
+######Plot Parsers
 elif args.command == "plot" and args.plot == "profit":
     if args.month:
-        console.print("\n[green]Plot will be visible via pop-up screen.[/green] Please [bold red]close[/bold red] the plotwindow to continue this program.\n")
+        console.print("\n[green]Profit plot will be visible via pop-up screen.[/green] Please [bold red]close[/bold red] the plotwindow to continue this program.\n")
         barplot_monthprofit(args.month)
     elif args.year:
-        console.print("\n[green]Plot will be visible via pop-up screen.[/green] Please [bold red]close[/bold red] the plotwindow to continue this program.\n")
+        console.print("\n[green]Profit plot will be visible via pop-up screen.[/green] Please [bold red]close[/bold red] the plotwindow to continue this program.\n")
         barplot_yearprofit(args.year)
+
+elif args.command == "plot" and args.plot == "revenue":
+    if args.month:
+        console.print("\n[green]Revenue plot will be visible via pop-up screen.[/green] Please [bold red]close[/bold red] the plotwindow to continue this program.\n")
+        barplot_monthrevenue(args.month)
+    elif args.year:
+        console.print("\n[green]Revenue plot will be visible via pop-up screen.[/green] Please [bold red]close[/bold red] the plotwindow to continue this program.\n")
+        barplot_yearrevenue(args.year)
+
+elif args.command == "plot" and args.plot == "loss":
+    if args.month:
+        console.print("\n[green]Loss plot will be visible via pop-up screen.[/green] Please [bold red]close[/bold red] the plotwindow to continue this program.\n")
+        barplot_monthloss(args.month)
+    elif args.year:
+        console.print("\n[green]Loss plot will be visible via pop-up screen.[/green] Please [bold red]close[/bold red] the plotwindow to continue this program.\n")
+        barplot_yearloss(args.year)
