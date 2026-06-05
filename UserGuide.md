@@ -131,11 +131,11 @@ Depending on which option you choose, it will print the corresponding revenue of
 ### Report profit
 You can report the profit of your supermarket, based on your bought and sold products. You can do this for different times. For today, yesterday or a specific month (Date must be in format YYYY-MM).
 
-``python main.py profit revenue --today``
+``python main.py report profit --today``
 
-``python main.py profit revenue --yesterday``
+``python main.py report profit --yesterday``
 
-``python main.py profit revenue --date 2026-05``
+``python main.py report profit --date 2026-05``
 
 Depending on which option you choose, it will print the corresponding profit of your supermarket:
 
@@ -144,11 +144,11 @@ Depending on which option you choose, it will print the corresponding profit of 
 ### Report loss
 You can report the losses of your supermarket, based on your bought and sold products. You can do this for different times. For today, yesterday or a specific month (Date must be in format YYYY-MM).
 
-``python main.py loss revenue --today``
+``python main.py report loss --today``
 
-``python main.py loss revenue --yesterday``
+``python main.py report loss --yesterday``
 
-``python main.py loss revenue --date 2026-05``
+``python main.py report loss --date 2026-05``
 
 Depending on which option you choose, it will print the corresponding loss of your supermarket:
 

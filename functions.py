@@ -269,7 +269,7 @@ def report_revenue(revenue_time, filepathsold=file_pathsold):
             selldate = dt.datetime.strptime(row["Sell Date"], '%Y-%m-%d').date()
             revenue = float(row["Sell Price"]) * float(row["Count"])
             if time_period == "day":
-                if buydate <= selldate <= revenue_time and selldate == revenue_time: 
+                if buydate <= revenue_time and selldate <= revenue_time and selldate == revenue_time: 
                     total_revenue += revenue
             elif time_period == "month":
                 if selldate.year == revenue_time.year and selldate.month == revenue_time.month:

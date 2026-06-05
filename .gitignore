@@ -5,3 +5,4 @@
 /test.csv
 /venv
 /__pycache__
+tests/__pycache__/test_functions.cpython-314-pytest-9.0.3.pyc
